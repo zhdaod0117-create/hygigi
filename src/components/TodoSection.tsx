@@ -118,17 +118,17 @@ export default function TodoSection({
           placeholder="할 일을 입력해주세요"
           className="rounded-xl border-2 border-brown-400/30 bg-white px-3 py-2 text-sm text-brown-800 outline-none focus:border-brown-500"
         />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="flex-1 rounded-xl border-2 border-brown-400/30 bg-white px-2 py-1.5 text-sm text-brown-800 outline-none focus:border-brown-500"
+            className="min-w-0 flex-1 basis-32 rounded-xl border-2 border-brown-400/30 bg-white px-2 py-1.5 text-sm text-brown-800 outline-none focus:border-brown-500"
           />
           <select
             value={assignee}
             onChange={(e) => setAssignee(e.target.value as AssigneeChoice)}
-            className="rounded-xl border-2 border-brown-400/30 bg-white px-2 py-1.5 text-sm text-brown-800 outline-none focus:border-brown-500"
+            className="min-w-0 flex-1 basis-20 rounded-xl border-2 border-brown-400/30 bg-white px-2 py-1.5 text-sm text-brown-800 outline-none focus:border-brown-500"
           >
             <option value="both">둘 다</option>
             <option value="me">나</option>
@@ -138,7 +138,7 @@ export default function TodoSection({
           </select>
           <button
             type="submit"
-            className="rounded-xl bg-brown-500 px-4 py-1.5 text-sm font-semibold text-cream-50 hover:bg-brown-600"
+            className="shrink-0 whitespace-nowrap rounded-xl bg-brown-500 px-4 py-1.5 text-sm font-semibold text-cream-50 transition hover:bg-brown-600"
           >
             추가
           </button>
