@@ -8,6 +8,9 @@ function isPublicPath(pathname: string) {
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
     pathname.startsWith("/icons") ||
     pathname.startsWith("/_next") ||
+    // Digital Asset Links (TWA/Android app verification) is fetched
+    // unauthenticated by Google — it must never redirect to /login.
+    pathname.startsWith("/.well-known") ||
     pathname === "/favicon.ico" ||
     pathname === "/sw.js"
   );

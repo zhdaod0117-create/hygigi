@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.retrievernest.twa",
+      "sha256_cert_fingerprints": [
+        "2E:F3:BD:4D:E3:6A:42:E9:17:3B:2C:C5:A8:38:6F:4F:45:DC:80:DF:89:43:65:68:F0:10:F6:8D:97:CE:86:9C"
+      ]
+    }
+  }
+]
