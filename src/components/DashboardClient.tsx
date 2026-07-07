@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import type { Note, Todo } from "@/lib/types";
+import type { Mood, MoodLog, Note, Todo, WorkStatus, WorkStatusLog } from "@/lib/types";
+import { PARTNER_MOOD_BUBBLES, PARTNER_STATUS_BUBBLES } from "@/lib/constants";
+import TodayUsStrip from "@/components/TodayUsStrip";
 import TodoSection from "@/components/TodoSection";
 import NoteSection from "@/components/NoteSection";
 import PixelRetriever from "@/components/PixelRetriever";
 import { addTodo, toggleTodo, deleteTodo } from "@/lib/actions/todos";
 import { addNote, deleteNote } from "@/lib/actions/notes";
+import { addMoodLog } from "@/lib/actions/mood";
+import { setWorkStatus } from "@/lib/actions/status";
 
 export default function DashboardClient({
   workspaceId,
@@ -15,15 +20,31 @@ export default function DashboardClient({
   partnerId,
   initialTodos,
   initialNotes,
+  initialMyMood,
+  initialPartnerMood,
+  initialMyStatus,
+  initialPartnerStatus,
+  partnerWroteDiaryToday,
+  iWroteDiaryToday,
 }: {
   workspaceId: string;
   currentUserId: string;
   partnerId: string | null;
   initialTodos: Todo[];
   initialNotes: Note[];
+  initialMyMood: MoodLog | null;
+  initialPartnerMood: MoodLog | null;
+  initialMyStatus: WorkStatusLog | null;
+  initialPartnerStatus: WorkStatusLog | null;
+  partnerWroteDiaryToday: boolean;
+  iWroteDiaryToday: boolean;
 }) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [myMood, setMyMood] = useState<MoodLog | null>(initialMyMood);
+  const [partnerMood, setPartnerMood] = useState<MoodLog | null>(initialPartnerMood);
+  const [myStatus, setMyStatus] = useState<WorkStatusLog | null>(initialMyStatus);
+  const [partnerStatus, setPartnerStatus] = useState<WorkStatusLog | null>(initialPartnerStatus);
   const [bubble, setBubble] = useState<{ id: number; text: string } | null>(null);
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
   const bubbleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,10 +68,14 @@ export default function DashboardClient({
   }
 
   useEffect(() => {
+    if (partnerWroteDiaryToday && !iWroteDiaryToday) {
+      showBubble("오늘의 질문에 상대방이 먼저 답했어! 📖");
+    }
     return () => {
       if (bubbleTimeout.current) clearTimeout(bubbleTimeout.current);
       if (toastTimeout.current) clearTimeout(toastTimeout.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -84,16 +109,57 @@ export default function DashboardClient({
         (payload) => {
           if (payload.eventType === "INSERT") {
             const next = payload.new as Note;
-            setNotes((prev) => {
-              if (prev.some((n) => n.id === next.id)) return prev;
-              return [...prev, next];
-            });
+            setNotes((prev) => (prev.some((n) => n.id === next.id) ? prev : [...prev, next]));
             if (next.user_id !== currentUserId) {
               showBubble("새 메모가 왔어!");
             }
           } else if (payload.eventType === "DELETE") {
             const oldRow = payload.old as Partial<Note>;
             setNotes((prev) => prev.filter((n) => n.id !== oldRow.id));
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "mood_logs",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        (payload) => {
+          const log = payload.new as MoodLog;
+          if (log.user_id === currentUserId) {
+            setMyMood((prev) =>
+              !prev || prev.created_at <= log.created_at ? log : prev
+            );
+          } else {
+            setPartnerMood((prev) =>
+              !prev || prev.created_at <= log.created_at ? log : prev
+            );
+            showBubble(PARTNER_MOOD_BUBBLES[log.mood]);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "work_status_logs",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        (payload) => {
+          const log = payload.new as WorkStatusLog;
+          if (log.user_id === currentUserId) {
+            setMyStatus((prev) =>
+              !prev || prev.created_at <= log.created_at ? log : prev
+            );
+          } else {
+            setPartnerStatus((prev) =>
+              !prev || prev.created_at <= log.created_at ? log : prev
+            );
+            showBubble(PARTNER_STATUS_BUBBLES[log.status]);
           }
         }
       )
@@ -110,7 +176,6 @@ export default function DashboardClient({
       showError(error ?? "할 일 추가에 실패했어요.");
       return;
     }
-    // Realtime may deliver the same row; dedupe by id.
     setTodos((prev) => (prev.some((t) => t.id === data.id) ? prev : [...prev, data]));
   }
 
@@ -158,8 +223,49 @@ export default function DashboardClient({
     }
   }
 
+  async function handleCheckInMood(mood: Mood, note: string) {
+    const { data, error } = await addMoodLog({ workspaceId, mood, note });
+    if (error || !data) {
+      showError(error ?? "감정 기록에 실패했어요.");
+      return;
+    }
+    setMyMood(data);
+    showBubble("오늘의 날씨, 기록했어! 멍!");
+  }
+
+  async function handleSetStatus(status: WorkStatus) {
+    const { data, error } = await setWorkStatus({ workspaceId, status });
+    if (error || !data) {
+      showError(error ?? "상태 기록에 실패했어요.");
+      return;
+    }
+    setMyStatus(data);
+    if (status === "overtime") showBubble("야근이라니.. 힘내! 🌙");
+    else if (status === "off") showBubble("퇴근 축하해! 🏠");
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-4">
+      <TodayUsStrip
+        myMood={myMood}
+        partnerMood={partnerMood}
+        myStatus={myStatus}
+        partnerStatus={partnerStatus}
+        hasPartner={partnerId !== null}
+        onCheckInMood={handleCheckInMood}
+        onSetStatus={handleSetStatus}
+      />
+
+      {partnerWroteDiaryToday && !iWroteDiaryToday && (
+        <Link
+          href="/diary"
+          className="animate-pop-in flex items-center justify-between rounded-2xl border-2 border-butter-300 bg-butter-100 px-4 py-3 text-sm font-semibold text-brown-700 transition hover:bg-butter-200"
+        >
+          <span>📖 상대방이 오늘의 질문에 먼저 답했어요!</span>
+          <span className="text-xs text-brown-500">나도 쓰러 가기 →</span>
+        </Link>
+      )}
+
       <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
         <TodoSection
           todos={todos}
@@ -182,7 +288,7 @@ export default function DashboardClient({
         <div
           key={toast.id}
           role="alert"
-          className="animate-pop-in fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-lg"
+          className="animate-pop-in fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-lg"
         >
           {toast.text}
         </div>
