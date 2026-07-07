@@ -1,0 +1,14 @@
+{
+  "name": "Retriever Nest",
+  "short_name": "Retriever Nest",
+  "description": "커플이 함께 쓰는 픽셀 리트리버 공유 투두/메모 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffaf0",
+  "theme_color": "#9c6b41",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
