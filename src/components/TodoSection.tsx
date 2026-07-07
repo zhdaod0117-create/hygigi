@@ -35,11 +35,10 @@ export default function TodoSection({
     };
   }, [todos, today]);
 
-  function assigneeLabel(assignedTo: string | null) {
-    if (assignedTo === null) return "둘 다";
-    if (assignedTo === currentUserId) return "나";
-    if (assignedTo === partnerId) return "상대방";
-    return "둘 다";
+  function assigneeInfo(assignedTo: string | null) {
+    if (assignedTo === currentUserId) return { label: "나", emoji: "🙋", className: "bg-brown-500 text-cream-50" };
+    if (assignedTo === partnerId) return { label: "상대방", emoji: "💛", className: "bg-butter-200 text-brown-700" };
+    return { label: "둘 다", emoji: "🐾", className: "bg-cream-200 text-brown-600" };
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -53,28 +52,50 @@ export default function TodoSection({
   }
 
   function renderTodo(todo: Todo) {
+    const assignee = assigneeInfo(todo.assigned_to);
     return (
       <li
         key={todo.id}
-        className="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 shadow-sm"
+        className={`group flex items-center gap-3 rounded-xl border border-brown-400/10 bg-white/80 px-3 py-2.5 shadow-sm transition hover:shadow-md ${
+          todo.is_done ? "opacity-70" : ""
+        }`}
       >
-        <input
-          type="checkbox"
-          checked={todo.is_done}
-          onChange={(e) => onToggle(todo.id, e.target.checked)}
-          className="h-4 w-4 accent-brown-500"
-        />
-        <div className="flex-1">
-          <p className={`text-sm ${todo.is_done ? "text-brown-300 line-through" : "text-brown-800"}`}>
+        <button
+          type="button"
+          onClick={() => onToggle(todo.id, !todo.is_done)}
+          aria-label={todo.is_done ? "완료 취소" : "완료로 표시"}
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition ${
+            todo.is_done
+              ? "border-brown-500 bg-brown-500"
+              : "border-brown-400/40 bg-white hover:border-brown-500"
+          }`}
+        >
+          {todo.is_done && (
+            <span key={todo.id + "-check"} className="animate-check-pop text-xs text-cream-50">
+              ✓
+            </span>
+          )}
+        </button>
+        <div className="min-w-0 flex-1">
+          <p
+            className={`truncate text-sm transition ${
+              todo.is_done ? "text-brown-300 line-through" : "text-brown-800"
+            }`}
+          >
             {todo.title}
           </p>
-          <p className="text-[11px] text-brown-400">
-            {formatShortDate(todo.due_date)} · {assigneeLabel(todo.assigned_to)}
-          </p>
+          <div className="mt-1 flex items-center gap-1.5">
+            <span className="rounded-full bg-cream-100 px-2 py-0.5 text-[11px] text-brown-500">
+              📅 {formatShortDate(todo.due_date)}
+            </span>
+            <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${assignee.className}`}>
+              {assignee.emoji} {assignee.label}
+            </span>
+          </div>
         </div>
         <button
           onClick={() => onDelete(todo.id)}
-          className="rounded-full px-2 text-brown-400 hover:bg-red-50 hover:text-red-500"
+          className="shrink-0 rounded-full px-2 py-1 text-brown-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
           aria-label="삭제"
         >
           ✕
@@ -84,8 +105,10 @@ export default function TodoSection({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border-2 border-brown-400/30 bg-cream-100 p-5 shadow-sm">
-      <h2 className="text-lg font-bold text-brown-700">📝 오늘의 할 일</h2>
+    <section className="flex flex-col gap-4 rounded-2xl border-2 border-brown-400/30 bg-cream-100 p-5 shadow-md">
+      <h2 className="border-b border-brown-400/15 pb-3 text-lg font-bold text-brown-700">
+        📝 오늘의 할 일
+      </h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
         <input
@@ -124,7 +147,10 @@ export default function TodoSection({
 
       <ul className="flex flex-col gap-2">
         {todayTodos.length === 0 ? (
-          <li className="text-center text-sm text-brown-400">오늘 할 일이 없어요 🎉</li>
+          <li className="flex flex-col items-center gap-1 py-4 text-center text-sm text-brown-400">
+            <span className="text-2xl">🎉</span>
+            오늘 할 일이 없어요
+          </li>
         ) : (
           todayTodos.map(renderTodo)
         )}
@@ -134,7 +160,7 @@ export default function TodoSection({
         <div>
           <button
             onClick={() => setShowOthers((v) => !v)}
-            className="w-full rounded-xl bg-butter-100 px-3 py-1.5 text-xs font-semibold text-brown-600"
+            className="w-full rounded-xl bg-butter-100 px-3 py-2 text-xs font-semibold text-brown-600 transition hover:bg-butter-200"
           >
             {showOthers ? "▲ 접기" : `▼ 다른 할 일 보기 (${otherTodos.length})`}
           </button>

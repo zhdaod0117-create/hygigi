@@ -29,10 +29,10 @@ const config: Config = {
       keyframes: {
         // translateX(%) is relative to the element's own width, so crossing
         // the parent needs `left` (parent-relative) instead of a transform.
-        // 96px = dog sprite width (COLS * PIXEL_SIZE in PixelRetriever.tsx)
+        // 120px = dog sprite width (COLS * PIXEL_SIZE in PixelRetriever.tsx)
         "walk-x": {
           "0%": { left: "0px" },
-          "50%": { left: "calc(100% - 96px)" },
+          "50%": { left: "calc(100% - 120px)" },
           "100%": { left: "0px" },
         },
         "walk-flip": {
@@ -48,12 +48,28 @@ const config: Config = {
           "0%": { transform: "scale(0.8)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
+        blink: {
+          "0%, 92%, 100%": { opacity: "1" },
+          "96%": { opacity: "0" },
+        },
+        "shadow-pulse": {
+          "0%, 100%": { transform: "scaleX(1)", opacity: "0.25" },
+          "50%": { transform: "scaleX(0.85)", opacity: "0.15" },
+        },
+        "check-pop": {
+          "0%": { transform: "scale(0)" },
+          "60%": { transform: "scale(1.25)" },
+          "100%": { transform: "scale(1)" },
+        },
       },
       animation: {
         "walk-x": "walk-x 14s linear infinite",
         "walk-flip": "walk-flip 14s linear infinite",
         bob: "bob 0.6s ease-in-out infinite",
         "pop-in": "pop-in 0.2s ease-out",
+        blink: "blink 4s ease-in-out infinite",
+        "shadow-pulse": "shadow-pulse 0.6s ease-in-out infinite",
+        "check-pop": "check-pop 0.25s ease-out",
       },
     },
   },

@@ -27,9 +27,13 @@ const PIXEL_COLORS: Record<string, string> = {
   W: "#fff7e6",
 };
 
+// Cell coordinates (col, row) of the two eye pixels, used to apply the
+// blink animation without hand-editing every render call.
+const EYE_CELLS = new Set(["19-2"]);
+
 const COLS = DOG_ROWS[0].length;
 const ROWS = DOG_ROWS.length;
-const PIXEL_SIZE = 4;
+const PIXEL_SIZE = 5;
 // Keep in sync with the `walk-x` keyframe in tailwind.config.ts
 // (left: calc(100% - 96px)).
 const DOG_WIDTH = COLS * PIXEL_SIZE;
@@ -40,10 +44,10 @@ export default function PixelRetriever({
   bubble: { id: number; text: string } | null;
 }) {
   return (
-    <div className="relative h-16 w-full overflow-hidden">
+    <div className="relative h-20 w-full overflow-hidden">
       {/* walk-x moves this wrapper across the parent; the scaleX flip lives on
           an inner layer so the speech bubble text never mirrors. */}
-      <div className="animate-walk-x absolute bottom-0 left-0" style={{ width: DOG_WIDTH }}>
+      <div className="animate-walk-x absolute bottom-2 left-0" style={{ width: DOG_WIDTH }}>
         {bubble && (
           <div
             key={bubble.id}
@@ -53,6 +57,10 @@ export default function PixelRetriever({
             <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-white" />
           </div>
         )}
+        <div
+          className="animate-shadow-pulse absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-brown-700"
+          style={{ width: DOG_WIDTH * 0.6, height: 6 }}
+        />
         <div className="animate-walk-flip">
           <div
             className="animate-bob"
@@ -67,6 +75,7 @@ export default function PixelRetriever({
               row.split("").map((ch, x) => (
                 <div
                   key={`${x}-${y}`}
+                  className={EYE_CELLS.has(`${x}-${y}`) ? "animate-blink" : undefined}
                   style={{
                     width: PIXEL_SIZE,
                     height: PIXEL_SIZE,
