@@ -190,32 +190,40 @@ export default function HistoryClient({
                   return (
                     <li
                       key={m.id}
-                      className="group flex items-center gap-2 rounded-xl bg-white/60 px-3 py-1.5"
+                      className="group rounded-xl bg-white/60 px-3 py-1.5"
                     >
-                      <span className="text-lg">{mood.emoji}</span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-brown-700">
-                          <span className="font-semibold">{who(m.user_id)}</span> · {mood.label}
-                          {m.note && <span className="text-brown-500"> · “{m.note}”</span>}
-                        </p>
-                        <p className="text-[10px] text-brown-400">{formatKstTime(m.created_at)}</p>
+                      {/* Row 1: icon + text get the full card width. Reactions
+                          (6 buttons) and delete live on row 2 so they never
+                          fight the text for space and squeeze it to near-zero
+                          on narrow phones (each glyph wrapping its own line). */}
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg leading-tight">{mood.emoji}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-brown-700">
+                            <span className="font-semibold">{who(m.user_id)}</span> · {mood.label}
+                            {m.note && <span className="text-brown-500"> · “{m.note}”</span>}
+                          </p>
+                          <p className="text-[10px] text-brown-400">{formatKstTime(m.created_at)}</p>
+                        </div>
+                        {m.user_id === currentUserId && (
+                          <button
+                            onClick={() => handleDeleteMood(m.id)}
+                            className="shrink-0 rounded-full px-1.5 text-brown-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                            aria-label="삭제"
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
-                      <ReactionBar
-                        targetType="mood_log"
-                        targetId={m.id}
-                        reactions={reactions}
-                        currentUserId={currentUserId}
-                        onToggle={handleToggleReaction}
-                      />
-                      {m.user_id === currentUserId && (
-                        <button
-                          onClick={() => handleDeleteMood(m.id)}
-                          className="rounded-full px-1.5 text-brown-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
-                          aria-label="삭제"
-                        >
-                          ✕
-                        </button>
-                      )}
+                      <div className="mt-1 pl-7">
+                        <ReactionBar
+                          targetType="mood_log"
+                          targetId={m.id}
+                          reactions={reactions}
+                          currentUserId={currentUserId}
+                          onToggle={handleToggleReaction}
+                        />
+                      </div>
                     </li>
                   );
                 })}
